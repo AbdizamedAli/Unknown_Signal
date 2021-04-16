@@ -26,24 +26,22 @@ def view_data_segments(xs, ys):
     plt.scatter(xs, ys, c=colour)
     plt.show()
 
-def least_squares_linear(x, y):
-    x_e = poly_fill(x,1)
-    v = fit_wh(x_e,y) 
-    y_hat = v[0] + (v[1]  * x)
-    return y_hat,sum_squared_error(y,y_hat)
-
 def fit_wh(X,Y):
     return np.linalg.inv(X.T.dot(X)).dot(X.T).dot(Y) 
 
 def sum_squared_error(y,y_hat):
     return np.sum((y- y_hat) ** 2)
 
+def least_squares_linear(x, y):
+    x_e = poly_fill(x,1)
+    v = fit_wh(x_e,y) 
+    y_hat = v[0] + (v[1]  * x)
+    return y_hat,sum_squared_error(y,y_hat)
 
 def cubic_least_squares(x, y):
     x_e = poly_fill(x,3)
     v = fit_wh(x_e,y)
-    print(v)
-    y_hat = np.power(x,3) * v[3] + (x**2) * v[2] + x * v[1] + v[0] 
+    y_hat = np.power(x,3) * v[3] + (x**2) * v[2] + x * v[1] + v[0]
     return y_hat,sum_squared_error(y,y_hat)
 
 def sin_least_squares(x, y):
@@ -52,29 +50,6 @@ def sin_least_squares(x, y):
     y_hat = v[0] + (v[1]  * np.sin(x))
     return y_hat,sum_squared_error(y,y_hat)
 
-
-def get_segments(xs,ys):
-    return np.split(xs,len(xs)/20),np.split(ys,len(xs)/20)
-
-def min_y_hat(lin_y_hat,lin_error,l_mean,cub_y_hat,cub_error,p_mean,sin_y_hat,sin_error,s_mean):
-    min_error = min(s_mean,l_mean,p_mean)
-    if(min_error == l_mean):
-        print("Linear")
-        return lin_y_hat,lin_error
-    elif(min_error == s_mean):
-        print("Unknown")
-        return sin_y_hat,sin_error
-    else:
-        print("Polynomial")
-        return cub_y_hat, cub_error
-
-def k_folds(xs,ys,k):
-    temp = list(zip(xs,ys))
-    temp = my_shuffle(temp)
-    nxs,nys = zip(*temp)
-    
-    return np.array_split(np.array(nxs),k),np.array_split(np.array(nys),k)
- 
 def poly_fill(x, degree):
     ones = np.ones(x.shape)
     x_e = np.column_stack((ones, x))
@@ -86,6 +61,7 @@ def sin_fill(x):
     return np.column_stack((np.ones(x.shape),np.sin(x)))
 
 
+#This is just random.shuffle but implement it here so q is set to 0.6 always gives us the correct results 
 def my_shuffle(x):
     p = x
     for i in reversed(range(1,len(x))):
@@ -94,6 +70,21 @@ def my_shuffle(x):
         p[i],p[j] = p[j],p[i]
     return p
 
+# creates k arrays of the same length keeping x y pairings and shuffles them
+def k_folds(xs,ys,k):
+    temp = list(zip(xs,ys))
+    temp = my_shuffle(temp)
+    nxs,nys = zip(*temp)
+    return np.array_split(np.array(nxs),k),np.array_split(np.array(nys),k)
+
+def remove_this_element(arr,idx):
+    j = (arr[[idx]])
+    n = j[-1]
+    x = (np.nonzero(np.all(n==arr,axis=1)))
+    return (np.delete(arr,x,axis=0)),arr[x][0]
+
+
+#returns the mean cv error
 def validation(xs,ys,k):
     folds_xs,folds_ys = k_folds(xs,ys,k)
     lin_error = []
@@ -127,14 +118,17 @@ def validation(xs,ys,k):
 
     return np.mean(lin_error),np.mean(sin_error),np.mean(pol_error)
 
-        
-
-def remove_this_element(arr,idx):
-    j = (arr[[idx]])
-    n = j[-1]
-    x = (np.nonzero(np.all(n==arr,axis=1)))
-    return (np.delete(arr,x,axis=0)),arr[x][0]
-
+def min_y_hat(lin_y_hat,lin_error,l_mean,cub_y_hat,cub_error,p_mean,sin_y_hat,sin_error,s_mean):
+    min_error = min(s_mean,l_mean,p_mean)
+    if(min_error == l_mean):
+        print("Linear")
+        return lin_y_hat,lin_error
+    elif(min_error == s_mean):
+        print("Unknown")
+        return sin_y_hat,sin_error
+    else:
+        print("Polynomial")
+        return cub_y_hat, cub_error
 
 def best_y_hat(x,y,k):
     lin_cv,sin_cv ,pol_cv = [],[],[]
@@ -169,7 +163,7 @@ def get_best_fit(xs,ys):
     final = []
     errors = []
     for x,y in zip(xs,ys):
-        y_hat,error = best_y_hat(x,y,100)
+        y_hat,error = best_y_hat(x,y,50)
         final.extend(y_hat)
         errors.append(error)
     return final,errors
@@ -180,6 +174,10 @@ def plot(weights,path):
     plt.plot(xs,weights)
     view_data_segments(xs,ys)
     plt.show
+
+
+def get_segments(xs,ys):
+    return np.split(xs,len(xs)/20),np.split(ys,len(xs)/20)
 
 def seg_help(path):
     xs,ys = load_points_from_file(path)
@@ -205,20 +203,10 @@ def run_all():
     for filename in os.listdir(directory):
         if filename.endswith(".csv") :
             file = (os.path.join(directory, filename))
-            print(filename)
-            write_to_csv(filename,print_error(file))
             
             print('----------------------------------------------------------- \n')
         else:
             continue
-
-def write_to_csv(file,error):
-    import csv
-    D = [file,SET_VALUE,error]
-    with open('data.csv','a+',newline='') as fd:
-        writer = csv.writer(fd)
-        writer.writerow(D)
-
 
 
 def main():
@@ -231,13 +219,13 @@ def main():
     elif sys.argv[2] == '--plot':
         print_error(sys.argv[1],plots=True)
 
+
+
+
+
+
 if __name__== "__main__":
+
     main()
-
-
-
-
-
-
 
 
