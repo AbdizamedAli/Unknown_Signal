@@ -6,7 +6,7 @@ import random
 from matplotlib import pyplot as plt
 import math
 
-
+#Using this value allows for fitting the training data perfectly everytime as using a random number sometimes give inaccurate reconstrution error
 SET_VALUE = 0.6
 
 
@@ -121,13 +121,13 @@ def validation(xs,ys,k):
 def min_y_hat(lin_y_hat,lin_error,l_mean,cub_y_hat,cub_error,p_mean,sin_y_hat,sin_error,s_mean):
     min_error = min(s_mean,l_mean,p_mean)
     if(min_error == l_mean):
-        print("Linear")
+        # print("Linear")
         return lin_y_hat,lin_error
     elif(min_error == s_mean):
-        print("Unknown")
+        # print("Unknown")
         return sin_y_hat,sin_error
     else:
-        print("Polynomial")
+        # print("Polynomial")
         return cub_y_hat, cub_error
 
 def best_y_hat(x,y,k):
@@ -146,12 +146,12 @@ def best_y_hat(x,y,k):
     linear_fit,linear_error = least_squares_linear(x,y)
     cubic_fit, cubic_error = cubic_least_squares(x,y)
     sin_fit,sin_error = sin_least_squares(x,y)
-    print("--------------------------------------------------------------")
+    # print("--------------------------------------------------------------")
 
-    print("Linear CV {0} and Linear ssm {1}".format(lin_cv.mean(),linear_error))
-    print("cubic  CV {0} and cubic  ssm {1}".format(pol_cv.mean(),cubic_error))
-    print("sin    CV {0} and sin    ssm {1}".format(sin_cv.mean(),sin_error))
-    print("-------------------------------------------------------------- \n")
+    # print("Linear CV {0} and Linear ssm {1}".format(lin_cv.mean(),linear_error))
+    # print("cubic  CV {0} and cubic  ssm {1}".format(pol_cv.mean(),cubic_error))
+    # print("sin    CV {0} and sin    ssm {1}".format(sin_cv.mean(),sin_error))
+    # print("-------------------------------------------------------------- \n")
 
 
 
@@ -163,7 +163,8 @@ def get_best_fit(xs,ys):
     final = []
     errors = []
     for x,y in zip(xs,ys):
-        y_hat,error = best_y_hat(x,y,50)
+        #if using random Set value change 1 to 50 or more
+        y_hat,error = best_y_hat(x,y,1)
         final.extend(y_hat)
         errors.append(error)
     return final,errors
@@ -203,8 +204,8 @@ def run_all():
     for filename in os.listdir(directory):
         if filename.endswith(".csv") :
             file = (os.path.join(directory, filename))
-            
-            print('----------------------------------------------------------- \n')
+            print(file)
+            print_error(file)
         else:
             continue
 
@@ -225,6 +226,7 @@ def main():
 
 
 if __name__== "__main__":
+    
 
     main()
 
