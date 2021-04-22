@@ -6,8 +6,6 @@ import random
 from matplotlib import pyplot as plt
 import math
 
-#Using this value allows for fitting the training data perfectly everytime as using a random number sometimes give inaccurate reconstrution error
-SET_VALUE = 0.6
 
 
 def load_points_from_file(filename):
@@ -65,7 +63,7 @@ def sin_fill(x):
 def my_shuffle(x):
     p = x
     for i in reversed(range(1,len(x))):
-        q = SET_VALUE
+        q = random.random()
         j = math.floor(q * (i + 1))
         p[i],p[j] = p[j],p[i]
     return p
@@ -120,20 +118,27 @@ def validation(xs,ys,k):
 
 def min_y_hat(lin_y_hat,lin_error,l_mean,cub_y_hat,cub_error,p_mean,sin_y_hat,sin_error,s_mean):
     min_error = min(s_mean,l_mean,p_mean)
-    if(min_error == l_mean):
-        # print("Linear")
-        return lin_y_hat,lin_error
-    elif(min_error == s_mean):
-        # print("Unknown")
-        return sin_y_hat,sin_error
+    percentdiff = 0
+    if min_error < l_mean:
+        percentdiff = ((l_mean - min_error) / min_error)  * 100
+    if percentdiff > 7:
+        if(min_error == l_mean):
+            # print("Linear")
+            return lin_y_hat,lin_error
+        elif(min_error == s_mean):
+            # print("Unknown")
+            return sin_y_hat,sin_error
+        else:
+            # print("Polynomial")
+            return cub_y_hat, cub_error
     else:
-        # print("Polynomial")
-        return cub_y_hat, cub_error
+        #  print('Linear')
+         return lin_y_hat,lin_error
 
 def best_y_hat(x,y,k):
     lin_cv,sin_cv ,pol_cv = [],[],[]
     for i in range(k): 
-        lin_cv1,sin_cv1,pol_cv1 = validation(x,y,10)
+        lin_cv1,sin_cv1,pol_cv1 = validation(x,y,20)
         lin_cv.append(lin_cv1)
         sin_cv.append(sin_cv1)
         pol_cv.append(pol_cv1)
@@ -164,7 +169,7 @@ def get_best_fit(xs,ys):
     errors = []
     for x,y in zip(xs,ys):
         #if using random Set value change 1 to 50 or more
-        y_hat,error = best_y_hat(x,y,1)
+        y_hat,error = best_y_hat(x,y,20)
         final.extend(y_hat)
         errors.append(error)
     return final,errors
@@ -201,13 +206,16 @@ def print_error(path,plots=False):
 
 def run_all():
     directory = 'datafiles/train_data'
-    for filename in os.listdir(directory):
-        if filename.endswith(".csv") :
-            file = (os.path.join(directory, filename))
-            print(file)
-            print_error(file)
-        else:
-            continue
+    try:
+        for filename in os.listdir(directory):
+            if filename.endswith(".csv") :
+                file = (os.path.join(directory, filename))
+                print(file)
+                print_error(file)
+            else:
+                continue
+    except(FileNotFoundError):
+        print("Directory not found")
 
 
 def main():
@@ -227,7 +235,6 @@ def main():
 
 if __name__== "__main__":
     
-
     main()
 
 
